@@ -1,0 +1,8 @@
+# gitignore for VB6
+# Alasdair, 12 Sep 2020
+
+# Project files
+*.vbw
+
+# Junk
+*.bak

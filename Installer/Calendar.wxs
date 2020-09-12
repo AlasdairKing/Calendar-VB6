@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<!-- 
+	Making a new WXS file
+		1 Update values in Section 1
+		2 Update payload information in Section 2, including new Guids
+-->
+
+
+<!-- Section 1 - Product information -->
+<?define ProductName="Calendar WebbIE" ?>
+<?define Manufacturer="Accessible and WebbIE" ?>
+<?define UpgradeCode="{EAA91937-3AAD-47B4-8CA1-190460071396}" ?>
+<?define ProductVersion="2.2.1" ?>
+<!-- End of Section 1 -->
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:swid="http://schemas.microsoft.com/wix/TagExtension" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension" xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
+    <Product Id="*" Language="1033" Manufacturer="$(var.Manufacturer)" Name="$(var.ProductName)" UpgradeCode="$(var.UpgradeCode)" Version="$(var.ProductVersion)">
+        <Package Id="*" Compressed="yes" InstallerVersion="301" InstallScope="perMachine" InstallPrivileges="elevated" />
+		<!-- Remove Accessible Calendar from Task Schedule -->
+		<InstallExecuteSequence>
+			<Custom Action="RemoveAccessibleCalendarTask" After="InstallValidate">Installed AND NOT REINSTALL</Custom>
+		</InstallExecuteSequence>
+		<CustomAction Id="RemoveAccessibleCalendarTask" Directory="INSTALLDIR" ExeCommand="Calendar.exe -deleteshortcut" Return="asyncNoWait" />	
+
+        <Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="ProgramFilesFolder">
+				<Directory Id="MANUFACTURERDIR" Name="$(var.Manufacturer)">
+					<Directory Id="INSTALLDIR" Name="$(var.ProductName)">
+						<!-- Section 2 - File payload -->
+						<!-- Main EXE is EXEName.exe -->
+						<Component Feature="ProductFeature" Id="EXEName.exe">
+							<CreateFolder />
+							<File Id="EXEName.exe" Source="SourceDir\Calendar.exe" KeyPath="yes" >
+								<Shortcut Id='EXEName.exe' Name='$(var.ProductName)' Directory='ManufacturerGroup' 
+								Icon='EXEName.exe' WorkingDirectory="INSTALLDIR" Advertise="yes">
+									<Icon Id='EXEName.exe' SourceFile='SourceDir\Calendar.ico' />
+								</Shortcut>
+								<!-- Uncomment for desktop shortcut -->
+								<!-- <Shortcut Id='DesktopShortcut' Name='$(var.ProductName)' Directory='DesktopFolder' Icon='EXEName.exe' Advertise="yes" /> -->
+							</File>
+							<RemoveFile Id='Cleanup' On='uninstall' Name='*.*'/>
+							<RemoveFolder Id="CleanupFolder" On="uninstall" />
+							<RegistryValue Root="HKLM" Key="SOFTWARE\$(var.ProductName)\Calendar.exe" Type="string" Value="Installed" />
+						</Component>
+						<Component Feature="ProductFeature" Id="Calendar.exe.manifest">
+							<File Id="Calendar.exe.manifest" Source="SourceDir\Calendar.exe.manifest" KeyPath="yes" />
+						</Component>
+						<Component Feature="ProductFeature" Id="Calendar.ini">
+							<File Id="Calendar.ini" Source="SourceDir\Calendar.ini" KeyPath="yes" />
+						</Component>
+						<Component Feature="ProductFeature" Id="comdlg32.ocx">
+							<File Id="comdlg32.ocx" Source="SourceDir\comdlg32.ocx" KeyPath="yes" />
+						</Component>
+						<Component Feature="ProductFeature" Id="installed.ini">
+							<File Id="installed.ini" Source="SourceDir\installed.ini" KeyPath="yes" />
+						</Component>
+						<Component Feature="ProductFeature" Id="Calendar.Language.xml">
+							<File Id="Calendar.Language.xml" Source="SourceDir\Calendar.Language.xml" KeyPath="yes" />
+						</Component>
+						<Component Feature="ProductFeature" Id="Languages.xml">
+							<File Id="Languages.xml" Source="SourceDir\Languages.xml" KeyPath="yes" />
+						</Component>
+						<!-- End of file payload -->
+
+					</Directory>
+				</Directory>
+				<Directory Id='ProgramMenuFolder'>
+					<Directory Id='ManufacturerGroup' Name='$(var.Manufacturer)'>
+						<Component Id="ProgramGroup" Guid="*" Feature="ProductFeature"> 
+							<RemoveFolder Id="ProgramGroup" On="uninstall" />
+							<RegistryValue Root="HKCU" Key="SOFTWARE\$(var.ProductName)" Type="string" Value="Installed" />
+						</Component>
+					</Directory>
+				</Directory>
+			</Directory>
+			<Directory Id='WindowsFolder' />
+			<Directory Id='ProfilesFolder' />
+			<Directory Id="CommonAppDataFolder" />
+			<Directory Id='StartMenuFolder' />
+			<Directory Id='DesktopFolder' />			
+        </Directory>
+        <Feature Id="ProductFeature" Level="1" Title="$(var.ProductName)" ConfigurableDirectory="INSTALLDIR" />
+        <swid:Tag Regid="regid.2004-04.ui.org.webbie" Licensed="no" />
+		<Media Id="1" Cabinet="product.cab" EmbedCab="yes" CompressionLevel="none" />
+		<Property Id='WIXUI_INSTALLDIR' Value='INSTALLDIR' />
+		<!-- <UIRef Id='WixUI_Minimal' />
+		<WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+		<WixVariable Id="WixUIBannerBmp" Value="bannrbmp.bmp" />
+		<WixVariable Id="WixUIDialogBmp" Value="dlgbmp.bmp" /> -->
+		<CustomAction Id="SAVETARGETDIR" Property="ARPINSTALLLOCATION" Value="[INSTALLDIR]" /> 
+		<InstallExecuteSequence>
+			<Custom Action="SAVETARGETDIR" After="InstallValidate" />
+		</InstallExecuteSequence>
+		<Property Id="MSIFASTINSTALL" Value="7" />
+		<Property Id='ARPPRODUCTICON' Value='EXEName.exe' />
+		<Property Id='ARPHELPLINK' Value='http://www.webbie.org.uk' />		
+		<!-- Upgrade self and prevent downgrade -->
+		<InstallExecuteSequence>
+			<!-- Uninstall old version BEFORE installing any of our own files. Less efficient but safer. -->
+			<RemoveExistingProducts After="InstallValidate" />
+			<!-- Run application -->
+			<Custom Action="LaunchApplication" After="InstallFinalize">NOT Installed AND SUPPRESS_START&lt;&gt;"1"</Custom>
+		</InstallExecuteSequence>
+		<Upgrade Id="$(var.UpgradeCode)">
+			<UpgradeVersion Minimum="0.0.1" Maximum="$(var.ProductVersion)" Property="UPGRADE_SELF" IncludeMinimum="yes" IncludeMaximum="no" IgnoreRemoveFailure="yes" MigrateFeatures="yes" ExcludeLanguages="yes" />
+			<UpgradeVersion Minimum="$(var.ProductVersion)" OnlyDetect="yes" Property="NEWERVERSIONDETECTED" />		
+		</Upgrade>		
+		<Condition Message="A newer version of [ProductName] is already installed.  You must uninstall that package before this one can be installed.">
+			NOT NEWERVERSIONDETECTED
+		</Condition> 	
+		<Property Id="WixShellExecTarget" Value="[#EXEName.exe]" />
+		<CustomAction Id="LaunchApplication" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" />
+    </Product>
+</Wix>
