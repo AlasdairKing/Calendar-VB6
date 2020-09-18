@@ -1,8 +1,4 @@
-# Getting GitHub to recognise the programming language correctly
+# GitHub knows about VB6, it calls it VBA and ignores .vbp files. 
 # https://github.com/github/linguist#troubleshooting
-# Alasdair Sep 2020
-*.frm linguist-language=VB6
-*.frx linguist-language=VB6
-*.cls linguist-language=VB6
-*.bas linguist-language=VB6
-*.vbp linguist-language=VB6
+# Alasdair 18 Sep 2020
+*.vbp linguist-language=VBA
